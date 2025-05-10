@@ -21,13 +21,13 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
 import { Calendar as CalendarIcon, Clock } from 'lucide-react';
 import { Checkbox } from '@/components/ui/checkbox';
+import { getFromLocalStorage, saveToLocalStorage, STORAGE_KEYS } from '@/utils/localStorage';
 
 const eventSchema = z.object({
   title: z.string().min(1, "Event title is required"),
@@ -70,7 +70,7 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
   const watchIsAllDay = form.watch("isAllDay");
 
   const onSubmit = (data: EventFormValues) => {
-    const formattedDate = format(data.date, 'yyyy-MM-dd');
+    const formattedDate = format(data.date, 'MMMM d, yyyy');
     let formattedTime = "All day";
     
     if (!data.isAllDay && data.startTime && data.endTime) {
@@ -81,12 +81,11 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
       id: Date.now(),
       title: data.title,
       date: formattedDate,
-      displayDate: format(data.date, 'MMMM d, yyyy'),
       time: formattedTime
     };
     
     // Add to localStorage
-    const events = getFromLocalStorage(STORAGE_KEYS.EVENTS, []);
+    const events = getFromLocalStorage<any[]>(STORAGE_KEYS.EVENTS, []);
     events.push(newEvent);
     saveToLocalStorage(STORAGE_KEYS.EVENTS, events);
     
@@ -159,6 +158,7 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
                         selected={field.value}
                         onSelect={field.onChange}
                         initialFocus
+                        className="p-3 pointer-events-auto"
                       />
                     </PopoverContent>
                   </Popover>

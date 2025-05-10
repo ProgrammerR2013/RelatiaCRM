@@ -94,7 +94,7 @@ const CalendarPage = () => {
                 mode="single"
                 selected={date}
                 onSelect={handleDateSelect}
-                className="rounded-md border shadow p-3 pointer-events-auto"
+                className="rounded-md border shadow p-3"
               />
             </CardContent>
           </Card>
