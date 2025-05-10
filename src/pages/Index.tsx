@@ -1,21 +1,59 @@
 
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import Header from '@/components/layout/Header';
 import DashboardCards from '@/components/dashboard/DashboardCards';
 import UpcomingTasks from '@/components/dashboard/UpcomingTasks';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
+import { getFromLocalStorage, STORAGE_KEYS } from '@/utils/localStorage';
 
-const data = [
-  { name: 'Jan', revenue: 4000, expenses: 2400 },
-  { name: 'Feb', revenue: 3000, expenses: 1398 },
-  { name: 'Mar', revenue: 9800, expenses: 2000 },
-  { name: 'Apr', revenue: 3908, expenses: 2780 },
-  { name: 'May', revenue: 4800, expenses: 1890 },
-  { name: 'Jun', revenue: 3800, expenses: 2390 },
-];
+interface RevenueData {
+  name: string;
+  revenue: number;
+  expenses: number;
+}
 
 const Dashboard = () => {
+  const [chartData, setChartData] = useState<RevenueData[]>([]);
+
+  useEffect(() => {
+    // Get invoices from localStorage
+    const invoices = getFromLocalStorage(STORAGE_KEYS.INVOICES, []);
+    
+    // Create empty data structure for last 6 months
+    const months = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date();
+      d.setMonth(d.getMonth() - i);
+      months.push({
+        date: new Date(d.getFullYear(), d.getMonth(), 1),
+        name: d.toLocaleString('default', { month: 'short' }),
+        revenue: 0,
+        expenses: Math.floor(Math.random() * 2000 + 1000) // Random expenses as placeholder
+      });
+    }
+    
+    // Calculate revenue from invoices
+    invoices.forEach(invoice => {
+      if (invoice.status === 'paid') {
+        const invoiceDate = new Date(invoice.date);
+        const amount = parseFloat(invoice.amount.replace('$', '').replace(/,/g, ''));
+        
+        // Find the month this invoice belongs to
+        const monthIndex = months.findIndex(m => 
+          m.date.getMonth() === invoiceDate.getMonth() && 
+          m.date.getFullYear() === invoiceDate.getFullYear()
+        );
+        
+        if (monthIndex !== -1) {
+          months[monthIndex].revenue += amount;
+        }
+      }
+    });
+    
+    setChartData(months);
+  }, []);
+
   return (
     <div className="flex flex-col min-h-screen">
       <Header title="Dashboard" />
@@ -30,15 +68,21 @@ const Dashboard = () => {
               <CardTitle>Revenue Overview</CardTitle>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={300}>
-                <BarChart data={data}>
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Bar dataKey="revenue" fill="#8B5CF6" name="Revenue" />
-                  <Bar dataKey="expenses" fill="#E5E7EB" name="Expenses" />
-                </BarChart>
-              </ResponsiveContainer>
+              {chartData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={300}>
+                  <BarChart data={chartData}>
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip />
+                    <Bar dataKey="revenue" fill="#8B5CF6" name="Revenue" />
+                    <Bar dataKey="expenses" fill="#E5E7EB" name="Expenses" />
+                  </BarChart>
+                </ResponsiveContainer>
+              ) : (
+                <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                  No revenue data available
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

@@ -70,7 +70,7 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
   const watchIsAllDay = form.watch("isAllDay");
 
   const onSubmit = (data: EventFormValues) => {
-    const formattedDate = format(data.date, 'MMMM d, yyyy');
+    const formattedDate = format(data.date, 'yyyy-MM-dd');
     let formattedTime = "All day";
     
     if (!data.isAllDay && data.startTime && data.endTime) {
@@ -81,8 +81,14 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
       id: Date.now(),
       title: data.title,
       date: formattedDate,
+      displayDate: format(data.date, 'MMMM d, yyyy'),
       time: formattedTime
     };
+    
+    // Add to localStorage
+    const events = getFromLocalStorage(STORAGE_KEYS.EVENTS, []);
+    events.push(newEvent);
+    saveToLocalStorage(STORAGE_KEYS.EVENTS, events);
     
     onEventAdded(newEvent);
     form.reset({
