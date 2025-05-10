@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -15,58 +15,34 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
 import AddClientModal from '../modals/AddClientModal';
+import { getFromLocalStorage, saveToLocalStorage, STORAGE_KEYS } from '@/utils/localStorage';
+
+interface Client {
+  id: number;
+  name: string;
+  contact: string;
+  email: string;
+  phone: string;
+  projects: number;
+  status: 'active' | 'inactive';
+}
 
 const ClientsList = () => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [clients, setClients] = useState([
-    {
-      id: 1,
-      name: 'ABC Corporation',
-      contact: 'John Smith',
-      email: 'john@abccorp.com',
-      phone: '(123) 456-7890',
-      projects: 3,
-      status: 'active',
-    },
-    {
-      id: 2,
-      name: 'XYZ Technologies',
-      contact: 'Sarah Johnson',
-      email: 'sarah@xyztech.com',
-      phone: '(234) 567-8901',
-      projects: 2,
-      status: 'active',
-    },
-    {
-      id: 3,
-      name: 'Acme Inc.',
-      contact: 'David Miller',
-      email: 'david@acmeinc.com',
-      phone: '(345) 678-9012',
-      projects: 1,
-      status: 'inactive',
-    },
-    {
-      id: 4,
-      name: 'Global Solutions',
-      contact: 'Emily Davis',
-      email: 'emily@globalsolutions.com',
-      phone: '(456) 789-0123',
-      projects: 0,
-      status: 'active',
-    },
-    {
-      id: 5,
-      name: 'Tech Innovators',
-      contact: 'Michael Wilson',
-      email: 'michael@techinnovators.com',
-      phone: '(567) 890-1234',
-      projects: 2,
-      status: 'active',
-    },
-  ]);
+  const [clients, setClients] = useState<Client[]>([]);
+
+  // Load clients from local storage on initial render
+  useEffect(() => {
+    const savedClients = getFromLocalStorage<Client[]>(STORAGE_KEYS.CLIENTS, []);
+    setClients(savedClients);
+  }, []);
+
+  // Save clients to local storage when they change
+  useEffect(() => {
+    saveToLocalStorage(STORAGE_KEYS.CLIENTS, clients);
+  }, [clients]);
 
   const getInitials = (name: string) => {
     return name
@@ -80,7 +56,7 @@ const ClientsList = () => {
     setIsAddModalOpen(true);
   };
 
-  const handleClientAdded = (newClient: any) => {
+  const handleClientAdded = (newClient: Client) => {
     setClients([newClient, ...clients]);
   };
 

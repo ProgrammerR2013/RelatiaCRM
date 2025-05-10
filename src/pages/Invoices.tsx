@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '@/components/layout/Header';
-import { Search, Plus, FileText, Calendar } from 'lucide-react';
+import { Search, Plus, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -15,61 +15,47 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import AddInvoiceModal from '@/components/modals/AddInvoiceModal';
+import { getFromLocalStorage, saveToLocalStorage, STORAGE_KEYS } from '@/utils/localStorage';
+
+interface Invoice {
+  id: string;
+  client: string;
+  amount: string;
+  status: 'paid' | 'pending' | 'overdue' | 'draft';
+  date: string;
+  dueDate: string;
+}
+
+interface Client {
+  id: number;
+  name: string;
+}
 
 const Invoices = () => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [invoices, setInvoices] = useState([
-    {
-      id: 'INV-001',
-      client: 'ABC Corporation',
-      amount: '$2,400',
-      status: 'paid',
-      date: '2025-05-01',
-      dueDate: '2025-05-15',
-    },
-    {
-      id: 'INV-002',
-      client: 'XYZ Technologies',
-      amount: '$1,800',
-      status: 'pending',
-      date: '2025-05-05',
-      dueDate: '2025-05-20',
-    },
-    {
-      id: 'INV-003',
-      client: 'Acme Inc.',
-      amount: '$3,200',
-      status: 'overdue',
-      date: '2025-04-15',
-      dueDate: '2025-04-30',
-    },
-    {
-      id: 'INV-004',
-      client: 'Global Solutions',
-      amount: '$950',
-      status: 'draft',
-      date: '2025-05-10',
-      dueDate: '-',
-    },
-    {
-      id: 'INV-005',
-      client: 'Tech Innovators',
-      amount: '$4,500',
-      status: 'paid',
-      date: '2025-04-28',
-      dueDate: '2025-05-12',
-    },
-  ]);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
 
-  // Extract client names for the dropdown in the Add Invoice modal
-  const clients = invoices.map(invoice => ({ 
-    id: Date.now() + Math.random(), // Just a unique id for the list 
-    name: invoice.client 
-  })).filter((client, index, self) => 
-    index === self.findIndex((c) => c.name === client.name)
-  );
+  // Load invoices and clients from local storage on initial render
+  useEffect(() => {
+    const savedInvoices = getFromLocalStorage<Invoice[]>(STORAGE_KEYS.INVOICES, []);
+    const savedClients = getFromLocalStorage<Client[]>(STORAGE_KEYS.CLIENTS, []);
+    setInvoices(savedInvoices);
+    
+    // Transform clients data to match the expected format for the dropdown
+    const clientsForDropdown = savedClients.map(client => ({
+      id: client.id,
+      name: client.name
+    }));
+    setClients(clientsForDropdown);
+  }, []);
+
+  // Save invoices to local storage when they change
+  useEffect(() => {
+    saveToLocalStorage(STORAGE_KEYS.INVOICES, invoices);
+  }, [invoices]);
 
   const formatDate = (dateString: string) => {
     if (dateString === '-') return '-';
@@ -91,7 +77,7 @@ const Invoices = () => {
     setIsAddModalOpen(true);
   };
 
-  const handleInvoiceAdded = (newInvoice: any) => {
+  const handleInvoiceAdded = (newInvoice: Invoice) => {
     setInvoices([newInvoice, ...invoices]);
   };
 
@@ -108,7 +94,12 @@ const Invoices = () => {
   // Get the last invoice ID to generate the next one
   const getLastInvoiceId = () => {
     if (invoices.length === 0) return "INV-000";
-    return invoices[0].id;
+    const invoiceIds = invoices.map(inv => {
+      const numPart = inv.id.split('-')[1];
+      return parseInt(numPart, 10);
+    });
+    const highestNum = Math.max(...invoiceIds);
+    return `INV-${highestNum.toString().padStart(3, '0')}`;
   };
 
   return (

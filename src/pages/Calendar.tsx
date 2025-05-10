@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '@/components/layout/Header';
 import { Card, CardContent } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
@@ -7,43 +7,37 @@ import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import AddEventModal from '@/components/modals/AddEventModal';
+import { getFromLocalStorage, saveToLocalStorage, STORAGE_KEYS } from '@/utils/localStorage';
+
+interface Event {
+  id: number;
+  title: string;
+  date: string;
+  time: string;
+}
 
 const CalendarPage = () => {
   const { toast } = useToast();
   const [date, setDate] = React.useState<Date | undefined>(new Date());
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [events, setEvents] = useState([
-    {
-      id: 1,
-      title: "Client Meeting - ABC Corp",
-      date: "May 15, 2025",
-      time: "10:00 AM - 11:00 AM"
-    },
-    {
-      id: 2,
-      title: "Project Deadline - Website Redesign",
-      date: "May 20, 2025",
-      time: "11:59 PM"
-    },
-    {
-      id: 3,
-      title: "Team Weekly Sync",
-      date: "May 12, 2025",
-      time: "9:00 AM - 10:00 AM"
-    },
-    {
-      id: 4,
-      title: "Invoice Payment Due - XYZ Tech",
-      date: "May 25, 2025",
-      time: "All day"
-    }
-  ]);
+  const [events, setEvents] = useState<Event[]>([]);
+
+  // Load events from local storage on initial render
+  useEffect(() => {
+    const savedEvents = getFromLocalStorage<Event[]>(STORAGE_KEYS.EVENTS, []);
+    setEvents(savedEvents);
+  }, []);
+
+  // Save events to local storage when they change
+  useEffect(() => {
+    saveToLocalStorage(STORAGE_KEYS.EVENTS, events);
+  }, [events]);
 
   const handleAddEvent = () => {
     setIsAddModalOpen(true);
   };
 
-  const handleEventAdded = (newEvent: any) => {
+  const handleEventAdded = (newEvent: Event) => {
     setEvents([newEvent, ...events]);
   };
 
@@ -84,14 +78,20 @@ const CalendarPage = () => {
                 </Button>
               </div>
               <div className="space-y-4">
-                {events.map((event) => (
-                  <EventItem
-                    key={event.id}
-                    title={event.title}
-                    date={event.date}
-                    time={event.time}
-                  />
-                ))}
+                {events.length > 0 ? (
+                  events.map((event) => (
+                    <EventItem
+                      key={event.id}
+                      title={event.title}
+                      date={event.date}
+                      time={event.time}
+                    />
+                  ))
+                ) : (
+                  <div className="text-center py-4 text-muted-foreground">
+                    No events scheduled
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>

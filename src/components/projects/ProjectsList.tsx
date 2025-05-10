@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+
+import React, { useState, useEffect } from 'react';
 import { Search, Plus, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -14,61 +15,47 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { useToast } from '@/hooks/use-toast';
 import AddProjectModal from '../modals/AddProjectModal';
+import { getFromLocalStorage, saveToLocalStorage, STORAGE_KEYS } from '@/utils/localStorage';
+
+interface Project {
+  id: number;
+  name: string;
+  client: string;
+  deadline: string;
+  status: string;
+  progress: number;
+}
+
+interface Client {
+  id: number;
+  name: string;
+}
 
 const ProjectsList = () => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [projects, setProjects] = useState([
-    {
-      id: 1,
-      name: 'Website Redesign',
-      client: 'ABC Corporation',
-      deadline: '2025-06-15',
-      status: 'in-progress',
-      progress: 65,
-    },
-    {
-      id: 2,
-      name: 'Mobile App Development',
-      client: 'XYZ Technologies',
-      deadline: '2025-07-30',
-      status: 'not-started',
-      progress: 10,
-    },
-    {
-      id: 3,
-      name: 'E-commerce Integration',
-      client: 'Acme Inc.',
-      deadline: '2025-05-20',
-      status: 'overdue',
-      progress: 80,
-    },
-    {
-      id: 4,
-      name: 'Brand Identity Design',
-      client: 'Global Solutions',
-      deadline: '2025-08-10',
-      status: 'not-started',
-      progress: 0,
-    },
-    {
-      id: 5,
-      name: 'SEO Optimization',
-      client: 'Tech Innovators',
-      deadline: '2025-05-05',
-      status: 'completed',
-      progress: 100,
-    },
-  ]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
 
-  // Extract client names for the dropdown in the Add Project modal
-  const clients = projects.map(project => ({ 
-    id: project.id, 
-    name: project.client 
-  })).filter((client, index, self) => 
-    index === self.findIndex((c) => c.name === client.name)
-  );
+  // Load projects and clients from local storage on initial render
+  useEffect(() => {
+    const savedProjects = getFromLocalStorage<Project[]>(STORAGE_KEYS.PROJECTS, []);
+    const savedClients = getFromLocalStorage<Client[]>(STORAGE_KEYS.CLIENTS, []);
+    setProjects(savedProjects);
+    
+    // Transform clients data to match the expected format for the dropdown
+    const clientsForDropdown = savedClients.map(client => ({
+      id: client.id,
+      name: client.name
+    }));
+    setClients(clientsForDropdown);
+  }, []);
+
+  // Save projects to local storage when they change
+  useEffect(() => {
+    saveToLocalStorage(STORAGE_KEYS.PROJECTS, projects);
+  }, [projects]);
 
   const formatDate = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
@@ -90,7 +77,7 @@ const ProjectsList = () => {
     setIsAddModalOpen(true);
   };
 
-  const handleProjectAdded = (newProject: any) => {
+  const handleProjectAdded = (newProject: Project) => {
     setProjects([newProject, ...projects]);
   };
 
