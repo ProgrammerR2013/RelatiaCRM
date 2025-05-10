@@ -14,10 +14,12 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useToast } from '@/hooks/use-toast';
+import AddClientModal from '../modals/AddClientModal';
 
 const ClientsList = () => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [clients, setClients] = useState([
     {
       id: 1,
@@ -75,11 +77,11 @@ const ClientsList = () => {
   };
 
   const handleAddClient = () => {
-    // In a real app, this would open a modal or redirect to a form
-    toast({
-      title: "Add Client",
-      description: "Client creation form would open here",
-    });
+    setIsAddModalOpen(true);
+  };
+
+  const handleClientAdded = (newClient: any) => {
+    setClients([newClient, ...clients]);
   };
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -93,71 +95,79 @@ const ClientsList = () => {
   );
 
   return (
-    <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Clients</CardTitle>
-        <div className="flex items-center space-x-2">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Search clients..."
-              className="w-[200px] pl-8"
-              value={searchQuery}
-              onChange={handleSearch}
-            />
+    <>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <CardTitle>Clients</CardTitle>
+          <div className="flex items-center space-x-2">
+            <div className="relative">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                type="search"
+                placeholder="Search clients..."
+                className="w-[200px] pl-8"
+                value={searchQuery}
+                onChange={handleSearch}
+              />
+            </div>
+            <Button size="sm" onClick={handleAddClient}>
+              <Plus className="mr-1 h-4 w-4" />
+              Add Client
+            </Button>
           </div>
-          <Button size="sm" onClick={handleAddClient}>
-            <Plus className="mr-1 h-4 w-4" />
-            Add Client
-          </Button>
-        </div>
-      </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Contact</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Projects</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredClients.length > 0 ? (
-              filteredClients.map((client) => (
-                <TableRow key={client.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src="" alt={client.name} />
-                        <AvatarFallback>{getInitials(client.name)}</AvatarFallback>
-                      </Avatar>
-                      <span className="font-medium">{client.name}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>{client.contact}</TableCell>
-                  <TableCell>{client.email}</TableCell>
-                  <TableCell>{client.phone}</TableCell>
-                  <TableCell>{client.projects}</TableCell>
-                  <TableCell>
-                    <span className={`status-badge ${client.status === 'active' ? 'completed' : 'not-started'}`}>
-                      {client.status === 'active' ? 'Active' : 'Inactive'}
-                    </span>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={6} className="text-center py-4">No clients found</TableCell>
+                <TableHead>Name</TableHead>
+                <TableHead>Contact</TableHead>
+                <TableHead>Email</TableHead>
+                <TableHead>Phone</TableHead>
+                <TableHead>Projects</TableHead>
+                <TableHead>Status</TableHead>
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </CardContent>
-    </Card>
+            </TableHeader>
+            <TableBody>
+              {filteredClients.length > 0 ? (
+                filteredClients.map((client) => (
+                  <TableRow key={client.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <Avatar className="h-8 w-8">
+                          <AvatarImage src="" alt={client.name} />
+                          <AvatarFallback>{getInitials(client.name)}</AvatarFallback>
+                        </Avatar>
+                        <span className="font-medium">{client.name}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>{client.contact}</TableCell>
+                    <TableCell>{client.email}</TableCell>
+                    <TableCell>{client.phone}</TableCell>
+                    <TableCell>{client.projects}</TableCell>
+                    <TableCell>
+                      <span className={`status-badge ${client.status === 'active' ? 'completed' : 'not-started'}`}>
+                        {client.status === 'active' ? 'Active' : 'Inactive'}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-4">No clients found</TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
+      
+      <AddClientModal
+        open={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
+        onClientAdded={handleClientAdded}
+      />
+    </>
   );
 };
 

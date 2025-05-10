@@ -6,10 +6,12 @@ import { Calendar } from '@/components/ui/calendar';
 import { Button } from '@/components/ui/button';
 import { PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import AddEventModal from '@/components/modals/AddEventModal';
 
 const CalendarPage = () => {
   const { toast } = useToast();
   const [date, setDate] = React.useState<Date | undefined>(new Date());
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [events, setEvents] = useState([
     {
       id: 1,
@@ -38,10 +40,11 @@ const CalendarPage = () => {
   ]);
 
   const handleAddEvent = () => {
-    toast({
-      title: "Add Event",
-      description: "Event creation form would open here",
-    });
+    setIsAddModalOpen(true);
+  };
+
+  const handleEventAdded = (newEvent: any) => {
+    setEvents([newEvent, ...events]);
   };
 
   const handleDateSelect = (newDate: Date | undefined) => {
@@ -94,6 +97,13 @@ const CalendarPage = () => {
           </Card>
         </div>
       </main>
+      
+      <AddEventModal
+        open={isAddModalOpen}
+        onOpenChange={setIsAddModalOpen}
+        onEventAdded={handleEventAdded}
+        selectedDate={date}
+      />
     </div>
   );
 };

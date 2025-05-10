@@ -14,10 +14,12 @@ import {
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
+import AddInvoiceModal from '@/components/modals/AddInvoiceModal';
 
 const Invoices = () => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState('');
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [invoices, setInvoices] = useState([
     {
       id: 'INV-001',
@@ -61,6 +63,14 @@ const Invoices = () => {
     },
   ]);
 
+  // Extract client names for the dropdown in the Add Invoice modal
+  const clients = invoices.map(invoice => ({ 
+    id: Date.now() + Math.random(), // Just a unique id for the list 
+    name: invoice.client 
+  })).filter((client, index, self) => 
+    index === self.findIndex((c) => c.name === client.name)
+  );
+
   const formatDate = (dateString: string) => {
     if (dateString === '-') return '-';
     const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
@@ -78,11 +88,11 @@ const Invoices = () => {
   };
 
   const handleCreateInvoice = () => {
-    // In a real app, this would open a modal or redirect to a form
-    toast({
-      title: "Create Invoice",
-      description: "Invoice creation form would open here",
-    });
+    setIsAddModalOpen(true);
+  };
+
+  const handleInvoiceAdded = (newInvoice: any) => {
+    setInvoices([newInvoice, ...invoices]);
   };
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -94,6 +104,12 @@ const Invoices = () => {
     invoice.client.toLowerCase().includes(searchQuery.toLowerCase()) || 
     invoice.status.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  // Get the last invoice ID to generate the next one
+  const getLastInvoiceId = () => {
+    if (invoices.length === 0) return "INV-000";
+    return invoices[0].id;
+  };
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -161,6 +177,14 @@ const Invoices = () => {
             </Table>
           </CardContent>
         </Card>
+        
+        <AddInvoiceModal
+          open={isAddModalOpen}
+          onOpenChange={setIsAddModalOpen}
+          onInvoiceAdded={handleInvoiceAdded}
+          clients={clients}
+          lastInvoiceId={getLastInvoiceId()}
+        />
       </main>
     </div>
   );
