@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Search, Plus, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,9 +13,12 @@ import {
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { useToast } from '@/hooks/use-toast';
 
 const ProjectsList = () => {
-  const projects = [
+  const { toast } = useToast();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [projects, setProjects] = useState([
     {
       id: 1,
       name: 'Website Redesign',
@@ -56,7 +59,7 @@ const ProjectsList = () => {
       status: 'completed',
       progress: 100,
     },
-  ];
+  ]);
 
   const formatDate = (dateString: string) => {
     const options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric', year: 'numeric' };
@@ -74,6 +77,23 @@ const ProjectsList = () => {
     }
   };
 
+  const handleAddProject = () => {
+    // In a real app, this would open a modal or redirect to a form
+    toast({
+      title: "New Project",
+      description: "Project creation form would open here",
+    });
+  };
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const filteredProjects = projects.filter(project => 
+    project.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    project.client.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
@@ -85,9 +105,11 @@ const ProjectsList = () => {
               type="search"
               placeholder="Search projects..."
               className="w-[200px] pl-8"
+              value={searchQuery}
+              onChange={handleSearch}
             />
           </div>
-          <Button size="sm">
+          <Button size="sm" onClick={handleAddProject}>
             <Plus className="mr-1 h-4 w-4" />
             New Project
           </Button>
@@ -105,33 +127,39 @@ const ProjectsList = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {projects.map((project) => (
-              <TableRow key={project.id}>
-                <TableCell>
-                  <span className="font-medium">{project.name}</span>
-                </TableCell>
-                <TableCell>{project.client}</TableCell>
-                <TableCell>
-                  <div className="flex items-center">
-                    <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
-                    {formatDate(project.deadline)}
-                  </div>
-                </TableCell>
-                <TableCell>
-                  <span className={`status-badge ${project.status}`}>
-                    {getStatusLabel(project.status)}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Progress value={project.progress} className="h-2 w-24" />
-                    <span className="text-xs text-muted-foreground">
-                      {project.progress}%
+            {filteredProjects.length > 0 ? (
+              filteredProjects.map((project) => (
+                <TableRow key={project.id}>
+                  <TableCell>
+                    <span className="font-medium">{project.name}</span>
+                  </TableCell>
+                  <TableCell>{project.client}</TableCell>
+                  <TableCell>
+                    <div className="flex items-center">
+                      <Calendar className="mr-2 h-4 w-4 text-muted-foreground" />
+                      {formatDate(project.deadline)}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className={`status-badge ${project.status}`}>
+                      {getStatusLabel(project.status)}
                     </span>
-                  </div>
-                </TableCell>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Progress value={project.progress} className="h-2 w-24" />
+                      <span className="text-xs text-muted-foreground">
+                        {project.progress}%
+                      </span>
+                    </div>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={5} className="text-center py-4">No projects found</TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </CardContent>

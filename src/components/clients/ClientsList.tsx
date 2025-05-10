@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import { Search, Plus } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,9 +13,12 @@ import {
 } from '@/components/ui/table';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { useToast } from '@/hooks/use-toast';
 
 const ClientsList = () => {
-  const clients = [
+  const { toast } = useToast();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [clients, setClients] = useState([
     {
       id: 1,
       name: 'ABC Corporation',
@@ -61,7 +64,7 @@ const ClientsList = () => {
       projects: 2,
       status: 'active',
     },
-  ];
+  ]);
 
   const getInitials = (name: string) => {
     return name
@@ -70,6 +73,24 @@ const ClientsList = () => {
       .join('')
       .toUpperCase();
   };
+
+  const handleAddClient = () => {
+    // In a real app, this would open a modal or redirect to a form
+    toast({
+      title: "Add Client",
+      description: "Client creation form would open here",
+    });
+  };
+
+  const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+  };
+
+  const filteredClients = clients.filter(client => 
+    client.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    client.contact.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    client.email.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   return (
     <Card>
@@ -82,9 +103,11 @@ const ClientsList = () => {
               type="search"
               placeholder="Search clients..."
               className="w-[200px] pl-8"
+              value={searchQuery}
+              onChange={handleSearch}
             />
           </div>
-          <Button size="sm">
+          <Button size="sm" onClick={handleAddClient}>
             <Plus className="mr-1 h-4 w-4" />
             Add Client
           </Button>
@@ -103,28 +126,34 @@ const ClientsList = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {clients.map((client) => (
-              <TableRow key={client.id}>
-                <TableCell>
-                  <div className="flex items-center gap-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src="" alt={client.name} />
-                      <AvatarFallback>{getInitials(client.name)}</AvatarFallback>
-                    </Avatar>
-                    <span className="font-medium">{client.name}</span>
-                  </div>
-                </TableCell>
-                <TableCell>{client.contact}</TableCell>
-                <TableCell>{client.email}</TableCell>
-                <TableCell>{client.phone}</TableCell>
-                <TableCell>{client.projects}</TableCell>
-                <TableCell>
-                  <span className={`status-badge ${client.status === 'active' ? 'completed' : 'not-started'}`}>
-                    {client.status === 'active' ? 'Active' : 'Inactive'}
-                  </span>
-                </TableCell>
+            {filteredClients.length > 0 ? (
+              filteredClients.map((client) => (
+                <TableRow key={client.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <Avatar className="h-8 w-8">
+                        <AvatarImage src="" alt={client.name} />
+                        <AvatarFallback>{getInitials(client.name)}</AvatarFallback>
+                      </Avatar>
+                      <span className="font-medium">{client.name}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell>{client.contact}</TableCell>
+                  <TableCell>{client.email}</TableCell>
+                  <TableCell>{client.phone}</TableCell>
+                  <TableCell>{client.projects}</TableCell>
+                  <TableCell>
+                    <span className={`status-badge ${client.status === 'active' ? 'completed' : 'not-started'}`}>
+                      {client.status === 'active' ? 'Active' : 'Inactive'}
+                    </span>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={6} className="text-center py-4">No clients found</TableCell>
               </TableRow>
-            ))}
+            )}
           </TableBody>
         </Table>
       </CardContent>
