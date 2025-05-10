@@ -52,6 +52,7 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
   clients
 }) => {
   const { toast } = useToast();
+  const [popoverOpen, setPopoverOpen] = React.useState(false);
   
   const form = useForm<ProjectFormValues>({
     resolver: zodResolver(projectSchema),
@@ -78,6 +79,12 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
       title: "Project added",
       description: `${data.name} has been added successfully`,
     });
+  };
+
+  // Handle date selection without closing the popover
+  const handleDateSelect = (date: Date | undefined, field: any) => {
+    field.onChange(date);
+    // Don't close the popover automatically
   };
 
   return (
@@ -135,12 +142,17 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
               render={({ field }) => (
                 <FormItem className="flex flex-col">
                   <FormLabel>Deadline</FormLabel>
-                  <Popover>
+                  <Popover 
+                    open={popoverOpen} 
+                    onOpenChange={setPopoverOpen}
+                  >
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
                           variant="outline"
                           className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
+                          onClick={() => setPopoverOpen(true)}
+                          type="button"
                         >
                           {field.value ? (
                             format(field.value, "PPP")
@@ -155,9 +167,16 @@ const AddProjectModal: React.FC<AddProjectModalProps> = ({
                       <Calendar
                         mode="single"
                         selected={field.value}
-                        onSelect={field.onChange}
+                        onSelect={(date) => {
+                          handleDateSelect(date, field);
+                          // Close the popover manually after selection
+                          if (date) {
+                            setTimeout(() => setPopoverOpen(false), 100);
+                          }
+                        }}
                         disabled={(date) => date < new Date()}
                         initialFocus
+                        className="p-3 pointer-events-auto"
                       />
                     </PopoverContent>
                   </Popover>

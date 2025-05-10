@@ -55,6 +55,7 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
   selectedDate 
 }) => {
   const { toast } = useToast();
+  const [popoverOpen, setPopoverOpen] = React.useState(false);
   
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventSchema),
@@ -68,6 +69,12 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
   });
 
   const watchIsAllDay = form.watch("isAllDay");
+
+  // Handle date selection without closing the popover
+  const handleDateSelect = (date: Date | undefined, field: any) => {
+    field.onChange(date);
+    // Don't close the popover automatically
+  };
 
   const onSubmit = (data: EventFormValues) => {
     const formattedDate = format(data.date, 'MMMM d, yyyy');
@@ -136,12 +143,17 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
               render={({ field }) => (
                 <FormItem className="flex flex-col">
                   <FormLabel>Date</FormLabel>
-                  <Popover>
+                  <Popover
+                    open={popoverOpen}
+                    onOpenChange={setPopoverOpen}
+                  >
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
                           variant="outline"
                           className={`w-full pl-3 text-left font-normal ${!field.value && "text-muted-foreground"}`}
+                          onClick={() => setPopoverOpen(true)}
+                          type="button"
                         >
                           {field.value ? (
                             format(field.value, "PPP")
@@ -156,7 +168,13 @@ const AddEventModal: React.FC<AddEventModalProps> = ({
                       <Calendar
                         mode="single"
                         selected={field.value}
-                        onSelect={field.onChange}
+                        onSelect={(date) => {
+                          handleDateSelect(date, field);
+                          // Close the popover manually after selection
+                          if (date) {
+                            setTimeout(() => setPopoverOpen(false), 100);
+                          }
+                        }}
                         initialFocus
                         className="p-3 pointer-events-auto"
                       />
